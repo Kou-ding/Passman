@@ -1,0 +1,217 @@
+% Document class and two-column conversion
+\documentclass{report}
+% dimensions of paper and relative text positioning
+\usepackage[a4paper,top=2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+% math symbols
+\usepackage{amsmath}
+\usepackage{amssymb}
+% package for including URLs
+\usepackage{url}
+% Required for including images
+\usepackage{graphicx}
+\usepackage{float} % Required for specifying the exact location of a figure
+
+\usepackage{minted} % Required for including code snippets
+
+% enable writing in greek
+\usepackage[greek,english]{babel}
+\usepackage[utf8]{inputenc}
+
+\setlength{\parindent}{0pt} % Removes all indentation from paragraphs
+
+% Start of the document
+\begin{document}
+
+% Set the language to greek
+\selectlanguage{greek}
+
+% Title page
+\title{\Huge \bfseries \selectlanguage{english} Passman Project 2024\selectlanguage{greek}} %\Huge and \bfseries are used to make the title bigger and bold
+\author{Παπαδάκης Κωνσταντίνος Φώτιος\vspace{0.5cm} \\  ΑΕΜ:10371} % \vspace{0.5cm} is used to add some vertical space between the author and the AEM
+\date{\today}
+% prints the title, author and date on a separate page
+\maketitle
+
+\section*{Περιγραφή προβλήματος}
+Η εφαρμογή $Passman$ αποτελεί μια απλουστευμένη υλοποίηση διαχειριστή κωδικών. Στα πλαίσια της εργασίας
+μας καλούμαστε να επισημάνουμε τα κενά ασφαλείας της εν λόγω εφαρμογής, να παρουσιάσουμε ευπάθειες, να
+προτείνουμε τρόπους αντιμετώπισης και να εφαρμόσουμε τις απαραίτητες αλλαγές, όπου αυτό είναι δυνατόν.
+
+\section*{Περιγραφή διορθώσεων}
+Για να ανταπεξέλθουμε στις απαιτήσεις της εργασίες επιστρατεύσαμε διάφορες τακτικές τις οποίες θα 
+εξηγήσουμε στη συνέχεια.
+\begin{itemize}
+    \item \textbf{Περιορισμοί χρηστών βάσης:} Συνδεόμαστε στη βάση ως ένας χρήστης με περιορισμένα 
+    δικαιώματα.
+    \item \textbf{Κρυπτογράφηση κωδικών:} Χρησιμοποιούμε $hash$ αντί να παραθέτουμε τους κωδικούς 
+    στη βάση ως απλό κείμενο.
+    \item \textbf{Παραμετροποιημένα ερωτήματα:} Προστασία από $SQL$ $Injections$.
+    \item \textbf{Καθαρισμός εισόδου:} Προστασία από $XSS$ επιθέσεις.
+\end{itemize}
+
+\section*{Παραδείγματα εκμετάλλευσης ευπαθειών}
+Παράδειγμα επίθεσης $XSS$:
+\selectlanguage{english}
+\begin{minted}{html}
+    <script>alert('XSS Attack example!');</script>
+    <-- Instead now it is going to be displayed as the following text: -->
+    <-- &lt;script&gt;alert('XSS Attack example!')&lt;/script&gt; -->
+\end{minted}
+\selectlanguage{greek}
+Παράδειγμα επίθεσης $SQL$ $Injection$:
+\selectlanguage{english}
+\begin{minted}{sql}
+    SELECT * FROM login_users WHERE username = 'admin' OR '1' = '1';
+    -- This will return all the users in the database
+\end{minted}
+\selectlanguage{greek}
+Παράδειγμα εκμετάλλευσης μη κρυπτογραφημένων κωδικών:
+\selectlanguage{english}
+\begin{minted}{sql}
+    SELECT * FROM login_users;
+    -- This will return all the users and their passwords in the database
+\end{minted}
+\selectlanguage{greek}
+Παράδειγμα εκμετάλλευσης μη παραμετροποιημένων ερωτημάτων:
+\selectlanguage{english}
+\begin{minted}{sql}
+    
+\end{minted}
+
+\section*{Περιγραφή Αλλαγών Κώδικα}
+Στη συνέχεια πρόκειται να παραθέσουμε τον παλιό μαζί με τον καινούριο κώδικα και να εστιάζοντας στις 
+αλλαγές που πραγματοποιήσαμε καθώς και το νόημα αυτών.
+% Database connection
+\subsection*{$connection.php$}
+Εδώ προδιαγράφουμε τη σύνδεση με τη βάση δεδομένων μας. 
+\selectlanguage{english}
+\begin{minted}{php}
+    $servername = "localhost";
+    $username = "limited_user"; // Use a non-admin user
+    $password = "limited_password";
+    $dbname = "pwd_mgr";
+
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+\end{minted}
+\selectlanguage{greek}
+Έτσι οι χρήστες αλληλεπιδρούν με τη βάση με τα προνόμια του χρήστη $limited\_user$ και όχι του $root$. 
+Η δημιουργία του χρήστη $limited\_user$ και η ανάθεση των $privileges$ του γίνεται ως εξής:
+\selectlanguage{english}
+\begin{minted}{sql}
+    CREATE USER 'limited_user'@'localhost' IDENTIFIED BY 'limited_password';
+    GRANT SELECT, INSERT, UPDATE, DELETE ON pwd_mgr.* TO 'limited_user'@'localhost';
+\end{minted}
+\selectlanguage{greek}
+Του δίνουμε πρόσβαση μόνο στη βάση $pwd\_mgr$ και μόνο για τις $SELECT$, $INSERT$, $UPDATE$ και 
+$DELETE$ ενέργειες.
+% Register passman users
+\subsection*{$register.php$}
+Η πρώτη αλλαγή στο συγκεκριμένο αρχείο απαιτεί τον καθαρισμό του ονόματος χρήστη και του κωδικού
+από ειδικούς χαρακτήρες στην αρχή και το τέλος του αλφαριθμητικού κατά την εισαγωγή τους στη βάση.
+\selectlanguage{english}
+\begin{minted}{php}
+    // Get user submitted information
+    $new_username = trim($_POST['new_username']);
+    $new_password = trim($_POST['new_password']);
+\end{minted}
+\selectlanguage{greek}
+Σημαντικό είναι να σημειωθεί ότι στο ενδιάμεσο γίνεται και η κρυπτογράφηση του κωδικού.
+\selectlanguage{english}
+\begin{minted}{php}
+    $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+\end{minted}
+\selectlanguage{greek}
+Στη συνέχεια "προετοιμάζουμε" το παραμετροποιημένο ερώτημά μας προστατεύοντας από $SQL$ $Injections$. 
+Ουσιαστικά αυτό καθιστά αδύνατον να ερμηνευτεί η είσοδος του χρήστη ως $SQL$ εντολή.
+\selectlanguage{english}
+\begin{minted}{php}
+    $stmt = $conn->prepare("INSERT INTO login_users (username, password) VALUES (?, ?)");
+    $stmt->bind_param("ss", $new_username, $hashed_password);
+\end{minted}
+\selectlanguage{greek}
+% Login passman users
+\subsection*{$login.php$}
+Ομοίως, και εδώ καθαρίζουμε και παραμετροποιούμε το ερώτημά μας ενώ παράλληλα επαληθεύουμε
+τον κωδικό του χρήστη μέσω του $hash$ του.\\
+\textbf{Καθαρισμός εισόδου:}
+\selectlanguage{english}
+\begin{minted}{php}
+    // Get user submitted information
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+\end{minted}
+\selectlanguage{greek}
+\textbf{Παραμετροποίηση:}
+\selectlanguage{english}
+\begin{minted}{php}
+    // Prepare an SQL query
+    $stmt = $conn->prepare("SELECT password FROM login_users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $stmt->store_result();
+\end{minted}
+\selectlanguage{greek}
+\textbf{Επαλήθευση κωδικού:}
+\selectlanguage{english}
+\begin{minted}{php}
+    if ($stmt->num_rows > 0) {
+        $stmt->bind_result($hashed_password);
+        $stmt->fetch();
+
+        if (password_verify($password, $hashed_password)) {
+            $_SESSION['username'] = $username;
+            $_SESSION['loggedin'] = true;
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            $login_message = "Invalid username or password";
+        }
+    } else {
+        $login_message = "Invalid username or password";
+    }
+\end{minted}
+\selectlanguage{greek}
+% Dashboard
+\subsection*{$dashboard.php$}
+Στον κώδικα της κεντρικής σελίδας καθαρίζουμε την είσοδο του χρήστη πριν την αποθηκεύσουμε στη βάση.
+Επειδή πρόκειται να προβάλουμε τα στοιχεία αυτά στην σελίδα μέσω $html$ είναι απαραίτητο να τα περάσουμε 
+και από την συνάρτηση $htmlspecialchars$ για να αποφύγουμε τυχόν επιθέσεις $XSS$ όπου εκτελείται κώδικας
+$javascript$ μέσα στη σελίδα:
+\selectlanguage{english}
+\begin{minted}{php}
+    $new_website = htmlspecialchars(trim($_POST["new_website"]), ENT_QUOTES, 'UTF-8');
+    $new_username = htmlspecialchars(trim($_POST["new_username"]), ENT_QUOTES, 'UTF-8');
+    $new_password = htmlspecialchars(trim($_POST["new_password"]), ENT_QUOTES, 'UTF-8');
+\end{minted}
+\selectlanguage{greek}
+Παραμετροποιούμε το ερώτημα:
+\selectlanguage{english}
+\begin{minted}{php}
+    $stmt = $conn->prepare("INSERT INTO websites (login_user_id, web_url, web_username, web_password) VALUES ((SELECT id FROM login_users WHERE username = ?), ?, ?, ?)");
+    $stmt->bind_param("ssss", $username, $new_website, $new_username, $new_password);
+\end{minted}
+\selectlanguage{greek}
+Ομοίως για τα ερωτήματα $DELETE$ και $SELECT$.
+% Passman user notes
+\subsection*{$notes.php$}
+Τελευταία έχουμε το αρχείο υπεύθυνο για την διαχείρηση σημειώσεων από τον χρήστη. Επαναλαμβάνονται 
+οι ίδιες τεχνικές που είδαμε παραπάνω:\\
+\textbf{Καθαρισμός εισόδου:}
+\selectlanguage{english}
+\begin{minted}{php}
+    $new_note = htmlspecialchars(trim($_POST["new_note"]), ENT_QUOTES, 'UTF-8');
+\end{minted}
+\selectlanguage{greek}
+\textbf{Παραμετροποίηση:}
+\selectlanguage{english}
+\begin{minted}{php}
+    $stmt = $conn->prepare("INSERT INTO notes (login_user_id, note) VALUES ((SELECT id FROM login_users WHERE username = ?), ?)");
+    $stmt->bind_param("ss", $username, $new_note);
+\end{minted}
+\selectlanguage{greek}
+% Comments
+\section*{Σχόλια}
+
+
+\end{document}

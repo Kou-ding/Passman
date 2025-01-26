@@ -26,48 +26,74 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		$username = trim($_POST['username']);
 		$password = trim($_POST['password']);
 
-		// Connect to the database
-		$conn=mysqli_connect("localhost","root","","pwd_mgr");
-		// Check connection
-		if (mysqli_connect_errno())	{
-		  echo "Failed to connect to MySQL: " . mysqli_connect_error();
-		  exit();
-		}
+		//////////// Added start ////////////
+		$stmt = $conn->prepare("SELECT password FROM login_users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->store_result();
 
-		// xxx' OR 1=1; -- '
-		$sql_query = "SELECT * FROM login_users WHERE username='{$username}' AND password='{$password}';";
-		//echo $sql_query;
+        if ($stmt->num_rows > 0) {
+            $stmt->bind_result($hashed_password);
+            $stmt->fetch();
 
-		// Check if the credentials are valid
-		$result = $conn->query($sql_query);
-		unset($_POST['username']);
-		unset($_POST['password']);
+            if (password_verify($password, $hashed_password)) {
+                $_SESSION['username'] = $username;
+                $_SESSION['loggedin'] = true;
+                header("Location: dashboard.php");
+                exit;
+            } else {
+                $login_message = "Invalid username or password";
+            }
+        } else {
+            $login_message = "Invalid username or password";
+        }
 
-		if (!empty($result) && $result->num_rows >= 1) {
-			// Regenerate session ID to prevent session fixation!
-			//session_regenerate_id(true);
+        $stmt->close();
+        $conn->close();
+		//////////// Added end ////////////
+		
+		// // Connect to the database
+		// $conn=mysqli_connect("localhost","root","","pwd_mgr");
+		// // Check connection
+		// if (mysqli_connect_errno())	{
+		//   echo "Failed to connect to MySQL: " . mysqli_connect_error();
+		//   exit();
+		// }
 
-			// Successfully logged in
-			$_SESSION['username'] = $username;
-			$_SESSION['loggedin'] = true;
+		// // xxx' OR 1=1; -- '
+		// $sql_query = "SELECT * FROM login_users WHERE username='{$username}' AND password='{$password}';";
+		// //echo $sql_query;
 
-			//while ($row = $result -> fetch_assoc()) {
-			//	print_r($row);
-			//	$_SESSION['user_id'] = $row['id'];
-			//}
+		// // Check if the credentials are valid
+		// $result = $conn->query($sql_query);
+		// unset($_POST['username']);
+		// unset($_POST['password']);
 
-			// Free result set
-			$result -> free_result();
-			$conn -> close();
+		// if (!empty($result) && $result->num_rows >= 1) {
+		// 	// Regenerate session ID to prevent session fixation!
+		// 	//session_regenerate_id(true);
 
-			// Redirect to a dashboard page
-			header("Location: dashboard.php");
-			exit;
-		} else {
-			$login_message = "Invalid username or password";
-		}
+		// 	// Successfully logged in
+		// 	$_SESSION['username'] = $username;
+		// 	$_SESSION['loggedin'] = true;
 
-		$conn -> close();
+		// 	//while ($row = $result -> fetch_assoc()) {
+		// 	//	print_r($row);
+		// 	//	$_SESSION['user_id'] = $row['id'];
+		// 	//}
+
+		// 	// Free result set
+		// 	$result -> free_result();
+		// 	$conn -> close();
+
+		// 	// Redirect to a dashboard page
+		// 	header("Location: dashboard.php");
+		// 	exit;
+		// } else {
+		// 	$login_message = "Invalid username or password";
+		// }
+
+		// $conn -> close();
 	}
 }
 ?>

@@ -1,0 +1,6 @@
+_minted-report/
+myenv/
+*.aux
+*.fls
+*.log
+*.fdb_latexmk
