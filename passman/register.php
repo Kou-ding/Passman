@@ -28,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		$new_username = trim($_POST['new_username']);
 		$new_password = trim($_POST['new_password']);
 
-		//////////// Added start ////////////
 		require 'connection.php';
 
         // Hash the password before storing it
@@ -47,37 +46,57 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $stmt->close();
         $conn->close();
-		//////////// Added end ////////////
-		
-		// // Connect to the database
-		// $conn=mysqli_connect("localhost","root","","pwd_mgr");
-		// // Check connection
-		// if (mysqli_connect_errno())	{
-		//   echo "Failed to connect to MySQL: " . mysqli_connect_error();
-		//   exit();
-		// }
-
-		// // Insert a new user
-		// $sql_query = "INSERT INTO login_users (username,password) VALUES ('{$new_username}','{$new_password}');";
-		// //echo $sql_query;
-
-		// $result = $conn->query($sql_query);
-
-		// unset($_POST['new_username']);
-		// unset($_POST['new_password']);
-
-		// if ($result == true) {
-		// 	echo "<font color=red>Successful registration!</font>";
-		// 	echo "<p />You can now use the <a href='login.php'>login</a> page";
-		// 	exit;
-		// }
-		// else 
-		// 	$login_message = "Error, probably user already exists!";
-
-		// // Free result set
-		// $conn -> close();
 	}
 }
+
+//////////////////////// Old code ////////////////////////
+// // Start a new session (or resume an existing one)
+// session_start();
+
+// // Check if the user is already logged in
+// if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true && $_SESSION['username'] !== '') {
+// 	echo "<font color=red>You are already logged in!</font></br>";
+// 	echo "Please <a href='logout.php'>logout</a> first";
+//     exit;
+// }
+
+// if ($_SERVER["REQUEST_METHOD"] === "POST") {
+// 	if(!isset($_POST['new_username'], $_POST['new_password']) || trim($_POST['new_username']) =='' || trim($_POST['new_password']) == '') {
+// 		$login_message = "Missing username or password.";
+// 	}
+// 	else {
+// 		// Get user submitted information
+// 		$new_username = trim($_POST['new_username']);
+// 		$new_password = trim($_POST['new_password']);
+// 		// Connect to the database
+// 		$conn=mysqli_connect("localhost","root","","pwd_mgr");
+// 		// Check connection
+// 		if (mysqli_connect_errno())	{
+// 		  echo "Failed to connect to MySQL: " . mysqli_connect_error();
+// 		  exit();
+// 		}
+
+// 		// Insert a new user
+// 		$sql_query = "INSERT INTO login_users (username,password) VALUES ('{$new_username}','{$new_password}');";
+// 		//echo $sql_query;
+
+// 		$result = $conn->query($sql_query);
+
+// 		unset($_POST['new_username']);
+// 		unset($_POST['new_password']);
+
+// 		if ($result == true) {
+// 			echo "<font color=red>Successful registration!</font>";
+// 			echo "<p />You can now use the <a href='login.php'>login</a> page";
+// 			exit;
+// 		}
+// 		else 
+// 			$login_message = "Error, probably user already exists!";
+
+// 		// Free result set
+// 		$conn -> close();
+// 	}
+// }
 ?>
 
 

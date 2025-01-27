@@ -70,7 +70,6 @@
 </head>
 
 <?php
-///////// Added start //////////
 session_start();
 
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || $_SESSION['username'] == '') {
@@ -112,8 +111,7 @@ if ($result->num_rows > 0) {
 
 $conn->close();
 
-///////// Added end //////////
-
+/////////////////////////// Old code //////////////////////////////////
 // // Resume existing session (or start a new one)
 // session_start();
 
