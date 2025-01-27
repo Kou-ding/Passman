@@ -7,6 +7,10 @@
 </head>
 
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Start a new session (or resume an existing one)
 session_start();
 
@@ -27,7 +31,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 		require 'connection.php';
 		
-		$stmt = $conn->prepare("SELECT password FROM login_users WHERE username = ?");
+        // Debugging: Output the username
+        echo "Username entered: " . htmlspecialchars($username) . "<br>";
+        
+		$stmt = $conn->prepare("SELECT password FROM pwd_mgr.login_users WHERE username = ?");
+        if ($stmt === false) {
+            die('Prepare failed: ' . htmlspecialchars($conn->error));
+        }
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $stmt->store_result();
@@ -36,12 +46,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->bind_result($hashed_password);
             $stmt->fetch();
 
+            // Debugging: Output the hashed password
+            echo "Hashed password from DB: " . htmlspecialchars($hashed_password) . "<br>";
+
             if (password_verify($password, $hashed_password)) {
+                echo "Password verification successful.<br>";
                 $_SESSION['username'] = $username;
                 $_SESSION['loggedin'] = true;
                 header("Location: dashboard.php");
                 exit;
             } else {
+                echo "Password verification failed.<br>";
                 $login_message = "Invalid username or password";
             }
         } else {
