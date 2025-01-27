@@ -50,36 +50,44 @@
 \end{itemize}
 
 \section*{Παραδείγματα εκμετάλλευσης ευπαθειών}
-Παράδειγμα επίθεσης $XSS$:
+Παράδειγμα επίθεσης $XSS$ υπό την έλλειψη καθαρισμού της εισόδου:
 \selectlanguage{english}
 \begin{minted}{html}
+    <!-- For user input on the dashboard page such as: -->
     <script>alert('XSS Attack example!');</script>
-    <-- Instead now it is going to be displayed as the following text: -->
-    <-- &lt;script&gt;alert('XSS Attack example!')&lt;/script&gt; -->
+    <!-- we can execute javascript code -->
+    <!-- Instead now, after sanitization: -->
+    $new_website = htmlspecialchars(trim($_POST["new_website"]), ENT_QUOTES, 'UTF-8');
+    <!-- it is going to be displayed as the following text: -->
+    <!-- &lt;script&gt;alert('XSS Attack example!')&lt;/script&gt; -->
 \end{minted}
 \selectlanguage{greek}
-Παράδειγμα επίθεσης $SQL$ $Injection$:
+Παράδειγμα επίθεσης $SQL$ $Injection$ χωρίς παραμετροποίηση:
 \selectlanguage{english}
 \begin{minted}{sql}
     SELECT * FROM login_users WHERE username = 'admin' OR '1' = '1';
     -- This will return all the users in the database
+    -- Can be avoided through proper parameterization
 \end{minted}
 \selectlanguage{greek}
-Παράδειγμα εκμετάλλευσης μη κρυπτογραφημένων κωδικών:
+Παράδειγμα εκμετάλλευσης πρακτικής μη κρυπτογράφησης κωδικών:
 \selectlanguage{english}
 \begin{minted}{sql}
     SELECT * FROM login_users;
     -- This will return all the users and their passwords in the database
+    -- Can be avoided by hashing the passwords before storing them
 \end{minted}
 \selectlanguage{greek}
-Παράδειγμα εκμετάλλευσης μη παραμετροποιημένων ερωτημάτων:
+Παράδειγμα επίθεσης χρήστη με όλα τα δικαιώματα:
 \selectlanguage{english}
 \begin{minted}{sql}
-    
+    DROP DATABASE pwd_mgr;
+    -- This will delete the entire database and all its data
+    -- Can be avoided by using a user with limited privileges
 \end{minted}
-
+\selectlanguage{greek}
 \section*{Περιγραφή Αλλαγών Κώδικα}
-Στη συνέχεια πρόκειται να παραθέσουμε τον παλιό μαζί με τον καινούριο κώδικα και να εστιάζοντας στις 
+Στη συνέχεια πρόκειται να παραθέσουμε τον παλιό μαζί με τον καινούριο κώδικα εστιάζοντας στις 
 αλλαγές που πραγματοποιήσαμε καθώς και το νόημα αυτών.
 % Database connection
 \subsection*{$connection.php$}
@@ -116,13 +124,14 @@ $DELETE$ ενέργειες.
     $new_password = trim($_POST['new_password']);
 \end{minted}
 \selectlanguage{greek}
-Σημαντικό είναι να σημειωθεί ότι στο ενδιάμεσο γίνεται και η κρυπτογράφηση του κωδικού.
+Σημαντικό είναι να σημειωθεί ότι στο ενδιάμεσο γίνεται και η κρυπτογράφηση του κωδικού έτσι ώστε να 
+μην μπορεί να αξιοποιηθεί από κάποιον επιτιθέμενο η πληροφορία αυτή.
 \selectlanguage{english}
 \begin{minted}{php}
     $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
 \end{minted}
 \selectlanguage{greek}
-Στη συνέχεια "προετοιμάζουμε" το παραμετροποιημένο ερώτημά μας προστατεύοντας από $SQL$ $Injections$. 
+Στη συνέχεια προετοιμάζουμε το παραμετροποιημένο ερώτημά μας προστατεύοντας από $SQL$ $Injections$. 
 Ουσιαστικά αυτό καθιστά αδύνατον να ερμηνευτεί η είσοδος του χρήστη ως $SQL$ εντολή.
 \selectlanguage{english}
 \begin{minted}{php}
@@ -206,12 +215,10 @@ $javascript$ μέσα στη σελίδα:
 \textbf{Παραμετροποίηση:}
 \selectlanguage{english}
 \begin{minted}{php}
-    $stmt = $conn->prepare("INSERT INTO notes (login_user_id, note) VALUES ((SELECT id FROM login_users WHERE username = ?), ?)");
+    $stmt = $conn->prepare("INSERT INTO notes (login_user_id, note) 
+                            VALUES ((SELECT id FROM login_users WHERE username = ?), ?)");
     $stmt->bind_param("ss", $username, $new_note);
 \end{minted}
 \selectlanguage{greek}
-% Comments
-\section*{Σχόλια}
-
 
 \end{document}
